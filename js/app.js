@@ -66,10 +66,10 @@ function pageStats(){
     Mammalia:'#78716c', Amphibia:'#14b8a6', Arachnida:'#eab308', Reptilia:'#84cc16', Mollusca:'#f472b6'
   };
   const iconic=(DATA.iconic||[]).map(g=>({
-    key:g.key,
+    key:g.key||g.name,
     label:GROUPES_FR[g.name||g.key]||g.label||g.name||g.key,
     count:g.count||0,
-    color:GROUP_COLORS[g.key]||'#94a3b8'
+    color:GROUP_COLORS[g.key||g.name]||'#94a3b8'
   })).filter(g=>g.count>0);
 
   // Statuts
@@ -82,8 +82,8 @@ function pageStats(){
   // Qualité obs (donut 1)
   const quality=[
     {label:'Recherche', count:research, color:'#84cc16'},
-    {label:'Besoin d\'ID', count:needsId, color:'#fde047'},
-    {label:'Informel', count:casual, color:'#94a3b8'}
+    {label:'Identification', count:needsId, color:'#fde047'},
+    {label:'Vérifiée', count:casual, color:'#94a3b8'}
   ].filter(x=>x.count>0);
 
   // Identifications proxy (donut 3) — répartition simple
@@ -172,8 +172,8 @@ function pageStats(){
       '<div class="stats-meta">'+
         '<div class="stats-meta-item"><span class="k">Observateurs</span><span class="v">'+esc(String(observers))+'</span></div>'+
         '<div class="stats-meta-item"><span class="k">Espèces protégées</span><span class="v">'+stCount.protegee+'</span></div>'+
-        '<div class="stats-meta-item"><span class="k">Introduites / envahissantes</span><span class="v">'+(stCount.introduite+stCount.envahissante)+'</span></div>'+
-        '<div class="stats-meta-item"><span class="k">Indigènes (fiches)</span><span class="v">'+stCount.indigene+'</span></div>'+
+        '<div class="stats-meta-item"><span class="k">Envahissantes</span><span class="v">'+stCount.envahissante+'</span></div>'+
+        '<div class="stats-meta-item"><span class="k">Indigènes</span><span class="v">'+stCount.indigene+'</span></div>'+
       '</div>'+
     '</section>'+
 
