@@ -177,6 +177,22 @@ function pageStats(){
       '<div class="sunburst-wrap"><div id="sunburst"></div><div id="sunburst-legend" class="sunburst-legend"></div></div>'+
     '</section>'+
 
+    // —— COURBE D'ACCUMULATION ——
+    '<section class=\"stats-dark stats-block\">'+
+      '<h2 class=\"stats-h\">Courbe d’accumulation des espèces</h2>'+
+      '<p class=\"stats-help\">Nombre total d’espèces différentes recensées au fil du temps, d’après la date de première observation de chaque espèce. Tant que la courbe monte, l’inventaire n’est pas terminé.</p>'+
+      '<div id=\"accum-chart\" class=\"accum-wrap\"></div>'+
+      '<div id=\"accum-sum\" class=\"accum-sum\"></div>'+
+    '</section>'+
+
+    // —— COMPLÉTUDE + RÔLES ÉCOLOGIQUES ——
+    '<section class=\"stats-dark stats-block\">'+
+      '<div class=\"stats-two\">'+
+        '<div><h2 class=\"stats-h\">Complétude de l’inventaire</h2><div id=\"complete-box\"></div></div>'+
+        '<div><h2 class=\"stats-h\">Rôles écologiques</h2><div id=\"roles-box\"></div></div>'+
+      '</div>'+
+    '</section>'+
+
     // —— MOIS + ANNÉES ——
     '<section class="stats-dark stats-block">'+
       '<h2 class="stats-h">Activité au fil des mois</h2>'+
@@ -291,6 +307,112 @@ function pageStats(){
   document.getElementById('month-bars').innerHTML=byMonth.map((v,i)=>
     '<div class="mbar"><div class="mbar-fill" style="height:'+(v/maxM*120)+'px" title="'+monthNames[i]+' : '+v+'"></div><span>'+monthNames[i]+'</span></div>'
   ).join('');
+
+  // --- Courbe d'accumulation, complétude de l'inventaire, rôles écologiques ---
+  (function inventaire(){
+    const sps=DATA.species||[], fch=DATA.fiches||{};
+    const fmtDate=d=>d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4);
+    const pct=x=>Math.round(x)+'\u00a0%';
+
+    // 1) Courbe d'accumulation (date de première observation de chaque espèce)
+    const dates=sps.map(sp=>((fch[String(sp.taxon_id)]||{}).premiere_obs||'').slice(0,10))
+      .filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+    const box=document.getElementById('accum-chart'), sum=document.getElementById('accum-sum');
+    const T=d=>Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10));
+    function drawAccum(){
+      const bx=document.getElementById('accum-chart'); if(!bx||dates.length<2) return;
+      const n=dates.length, t0=T(dates[0]), t1=T(dates[n-1]), span=Math.max(1,t1-t0);
+      const W=Math.max(300,bx.clientWidth||820), H=W<500?240:300, L=40, R=20, Tp=22, B=34;
+      const yMax=Math.ceil(n/20)*20;
+      const X=t=>L+(t-t0)/span*(W-L-R), Y=v=>Tp+(1-v/yMax)*(H-Tp-B);
+      const pts=[]; dates.forEach((d,i)=>{ const t=T(d); if(pts.length&&pts[pts.length-1].t===t){pts[pts.length-1].v=i+1;} else pts.push({t,v:i+1,d}); });
+      let line='M'+X(t0).toFixed(1)+' '+Y(0).toFixed(1);
+      pts.forEach(p=>{ line+=' H'+X(p.t).toFixed(1)+' V'+Y(p.v).toFixed(1); });
+      const area=line+' V'+Y(0).toFixed(1)+' Z';
+      // graduations : axe vertical
+      const yStep=yMax>100?40:20; let grid='';
+      for(let v=0; v<=yMax; v+=yStep){ grid+='<line class="grid" x1="'+L+'" x2="'+(W-R)+'" y1="'+Y(v).toFixed(1)+'" y2="'+Y(v).toFixed(1)+'"/><text x="'+(L-6)+'" y="'+(Y(v)+4).toFixed(1)+'" text-anchor="end">'+v+'</text>'; }
+      // graduations : axe horizontal (début de mois, assez espacés)
+      const d0=new Date(t0), ticks=[]; let y=d0.getUTCFullYear(), mo=d0.getUTCMonth()+1;
+      for(;;){ const t=Date.UTC(y,mo,1); if(t>t1) break; ticks.push({t,m:(mo%12),y:y+(mo>11?1:0)}); mo++; if(mo>11){mo=0;y++;} if(ticks.length>60) break; }
+      const every=Math.max(1,Math.ceil(48/Math.max(1,(W-L-R)/Math.max(1,ticks.length))));
+      let xl='';
+      ticks.forEach((k,i)=>{ if(i%every) return; const x=X(k.t).toFixed(1);
+        xl+='<line class="grid" x1="'+x+'" x2="'+x+'" y1="'+Tp+'" y2="'+(H-B)+'"/><text x="'+x+'" y="'+(H-B+16)+'" text-anchor="middle">'+monthNames[k.m]+(k.m===0||i===0?' '+String(k.y).slice(2):'')+'</text>'; });
+      const dots=pts.map(p=>'<circle cx="'+X(p.t).toFixed(1)+'" cy="'+Y(p.v).toFixed(1)+'" r="5" fill="transparent"><title>'+fmtDate(p.d)+' : '+p.v+' espèces</title></circle>').join('');
+      const last=pts[pts.length-1];
+      bx.innerHTML='<svg class="accum-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Courbe d’accumulation : '+n+' espèces au total">'+
+        '<defs><linearGradient id="accGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a3e635" stop-opacity=".45"/><stop offset="1" stop-color="#a3e635" stop-opacity=".02"/></linearGradient></defs>'+
+        grid+xl+'<path class="acc-area" d="'+area+'"/><path class="acc-line" d="'+line+'"/>'+dots+
+        '<circle class="acc-end" cx="'+X(last.t).toFixed(1)+'" cy="'+Y(last.v).toFixed(1)+'" r="4"/>'+
+        '<text class="acc-total" x="'+(X(last.t)-8).toFixed(1)+'" y="'+(Y(last.v)-10).toFixed(1)+'" text-anchor="end">'+last.v+' espèces</text></svg>';
+    }
+    if(box&&sum&&dates.length>1){
+      drawAccum();
+      window.__drawAccum=drawAccum;
+      if(!window.__accumResize){ window.__accumResize=true; let tm; window.addEventListener('resize',()=>{ clearTimeout(tm); tm=setTimeout(()=>{ if(window.__drawAccum) window.__drawAccum(); },150); }); }
+      const n=dates.length, t1=T(dates[n-1]), lastD=dates[n-1];
+      const recent=dates.filter(d=>T(d)>t1-60*864e5).length;
+      const undated=sps.length-n;
+      sum.innerHTML=
+        '<span><b>'+n+'</b> espèces datées</span>'+
+        '<span>Dernière nouvelle espèce : <b>'+fmtDate(lastD)+'</b></span>'+
+        '<span><b>+'+recent+'</b> espèces dans les 60 jours avant le '+fmtDate(lastD)+'</span>'+
+        '<p class="stats-note">'+(recent>0?'La courbe continue de monter : l’inventaire n’est pas encore stabilisé. ':'La courbe est presque à plat sur la période récente. ')+
+        (undated>0?undated+' espèce'+(undated>1?'s':'')+' sans date de première observation ne figure'+(undated>1?'nt':'')+' pas sur la courbe.':'')+'</p>';
+    } else if(box){ box.innerHTML='<p class="stats-note">Pas assez de dates pour tracer la courbe.</p>'; }
+
+    // 2) Complétude de l'inventaire (estimateur Chao1 sur le nombre d'observations par espèce)
+    const cb=document.getElementById('complete-box');
+    if(cb){
+      const counts=sps.map(sp=>sp.count||1), S=counts.length;
+      const f1=counts.filter(c=>c===1).length, f2=counts.filter(c=>c===2).length;
+      const est=S+(f2>0? f1*f1/(2*f2) : f1*(f1-1)/2);
+      const estR=Math.max(S,Math.round(est/10)*10), left=Math.max(0,Math.round((est-S)/10)*10);
+      const found=S/est*100;
+      cb.innerHTML=
+        '<div class="cmp-grid">'+
+          '<div class="cmp-tile"><div class="cmp-num">'+pct(S?f1/S*100:0)+'</div><div class="cmp-lab">des espèces ne sont vues qu’une seule fois ('+f1+' sur '+S+')</div></div>'+
+          '<div class="cmp-tile"><div class="cmp-num">≈ '+estR+'</div><div class="cmp-lab">espèces attendues au total (estimation)</div></div>'+
+          '<div class="cmp-tile"><div class="cmp-num">≈ '+left+'</div><div class="cmp-lab">espèces restant à découvrir</div></div>'+
+        '</div>'+
+        '<div class="cmp-bar" role="img" aria-label="Inventaire estimé à '+Math.round(found)+' %"><i style="width:'+Math.min(100,found).toFixed(1)+'%"></i></div>'+
+        '<div class="cmp-cap"><b>'+S+'</b> espèces trouvées, soit environ <b>'+pct(found)+'</b> de ce que le jardin pourrait abriter : il reste largement à explorer.</div>'+
+        '<p class="stats-note">Estimation indicative (formule Chao1) calculée à partir du nombre d’observations de chaque espèce : c’est un ordre de grandeur, pas une mesure exacte. Elle se précisera à mesure que les observations s’accumulent.</p>';
+    }
+
+    // 3) Rôles écologiques (d'après les fiches : régime alimentaire et rôle de pollinisateur)
+    const rb=document.getElementById('roles-box');
+    if(rb){
+      const RX_PRED=/prédat|carnivor|chasse|proie|parasit|puceron|^insectes\b|invertébrés|escargots|limaces|insectivor/;
+      const RX_DEC=/décompos|saprophag|saproxyl|nécrophag|détritiv|symbionte|cadavre|matières? organiques?|bois (pourri|mort)|insectes morts|débris/;
+      const R={prod:0,poll:0,pollOcc:0,pred:0,dec:0,autre:0};
+      sps.forEach(sp=>{
+        const f=fch[String(sp.taxon_id)]||{};
+        const reg=String(f.regime_alimentaire||'').toLowerCase(), pol=String(f.pollinisateur||'').toLowerCase();
+        let any=false;
+        if(sp.iconic==='Plantae'||/^autotroph/.test(reg)){R.prod++;any=true;}
+        if(/^oui/.test(pol)){R.poll++;any=true;} else if(/^(faible|occasionnel)/.test(pol)){R.pollOcc++;}
+        if(RX_PRED.test(reg)&&!/^sève/.test(reg)&&!/^insectes, vers, graines/.test(reg)){R.pred++;any=true;}
+        if(RX_DEC.test(reg)){R.dec++;any=true;}
+        if(!any) R.autre++;
+      });
+      const N=Math.max(1,sps.length);
+      const rows=[
+        {l:'Producteurs',s:'plantes (photosynthèse)',v:R.prod,c:'#65a30d'},
+        {l:'Pollinisateurs',s:R.pollOcc?'+ '+R.pollOcc+' occasionnels':'',v:R.poll,c:'#eab308'},
+        {l:'Prédateurs et auxiliaires',s:'prédateurs, parasitoïdes',v:R.pred,c:'#f97316'},
+        {l:'Décomposeurs',s:'matière morte, champignons',v:R.dec,c:'#a855f7'},
+        {l:'Autres régimes',s:'herbivores, omnivores…',v:R.autre,c:'#64748b'}
+      ];
+      const maxV=Math.max(1,...rows.map(r=>r.v));
+      rb.innerHTML=rows.map(r=>
+        '<div class="role-row"><div class="role-lab">'+esc(r.l)+(r.s?'<small>'+esc(r.s)+'</small>':'')+'</div>'+
+        '<div class="role-track"><div class="role-fill" style="width:'+(r.v/maxV*100).toFixed(1)+'%;background:'+r.c+'"></div></div>'+
+        '<div class="role-val">'+r.v+'<small>'+pct(r.v/N*100)+'</small></div></div>').join('')+
+        '<p class="stats-note">Une espèce peut avoir plusieurs rôles (un syrphe pollinise à l’état adulte et dévore des pucerons en larve) : les barres ne s’additionnent donc pas. Classement établi à partir des fiches (régime alimentaire, pollinisation).</p>';
+    }
+  })();
 
   // --- Year comparison bars ---
   const rows=[
