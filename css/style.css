@@ -1087,4 +1087,4 @@ button, input, select { font: inherit; }
 .role-fill{height:100%;border-radius:5px}
 .role-val{font-size:.85rem;font-weight:700;color:#f8fafc;text-align:right;line-height:1.1}
 .role-val small{display:block;font-size:.66rem;font-weight:400;color:#94a3b8}
-
+.sunburst-legend .sb-leg-title{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8;margin-bottom:.2rem}
