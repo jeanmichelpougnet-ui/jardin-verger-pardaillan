@@ -42,12 +42,15 @@ function pageAccueil(){
 function pageExplorer(groupe){
   mount('explorer');const m=document.getElementById('app-main');m.className='container';
   m.innerHTML='<div class="page-header"><div class="breadcrumb"><a href="#accueil" data-nav="accueil">Accueil</a> › Parcourir</div><h1>Parcourir les êtres vivants</h1></div><div class="explorer-layout"><aside class="sidebar"><h2>🍃 Groupes</h2><div class="tree-item active" data-group="all"><span>Tous</span><span class="count">'+(DATA.stats.totalSpecies||DATA.stats.species||DATA.species.length)+'</span></div><div id="tg"></div></aside><div><div class="filters-bar" id="fc"></div><div class="section-title"><span id="lt">Toutes les espèces</span><span class="text-muted" id="lc"></span></div><div class="card-grid" id="sl"></div></div></div>';
-  document.getElementById('tg').innerHTML=(DATA.iconic||[]).map(g=>'<div class="tree-item" data-group="'+(g.name||g.key)+'"><span>'+(g.icon||'')+' '+(GROUPES_FR[g.name||g.key]||g.label||g.name||g.key)+'</span><span class="count">'+g.count+'</span></div>').join('');
-  document.getElementById('fc').innerHTML=(DATA.iconic||[]).map(g=>'<button class="chip" data-group="'+(g.name||g.key)+'">'+(g.icon||'')+' '+(GROUPES_FR[g.name||g.key]||g.label||g.name||g.key)+' <span class="n">'+g.count+'</span></button>').join('');
+  document.getElementById('tg').innerHTML=(DATA.iconic||[]).map(g=>'<div class="tree-item" data-group="'+(g.name||g.key)+'"><span>'+(g.icon||'')+' '+(GROUPES_FR[g.name||g.key]||g.label||g.name||g.key)+'</span><span class="count">'+speciesInGroup(g.name||g.key)+'</span></div>').join('');
+  document.getElementById('fc').innerHTML=(DATA.iconic||[]).map(g=>'<button class="chip" data-group="'+(g.name||g.key)+'">'+(g.icon||'')+' '+(GROUPES_FR[g.name||g.key]||g.label||g.name||g.key)+' <span class="n">'+speciesInGroup(g.name||g.key)+'</span></button>').join('');
   let cur=groupe||'all';
   const rend=()=>{document.querySelectorAll('.tree-item,.chip').forEach(el=>el.classList.toggle('active',el.dataset.group===cur));let items=DATA.species;if(cur!=='all')items=items.filter(s=>s.iconic===cur);const tm=Object.fromEntries((DATA.iconic||[]).map(g=>[g.key,GROUPES_FR[g.name||g.key]||g.label||g.name||g.key]));document.getElementById('lt').textContent=cur==='all'?'Toutes les espèces':(tm[cur]||GROUPES_FR[cur]||cur);document.getElementById('lc').textContent=items.length+' espèces';document.getElementById('sl').innerHTML=items.map(s=>'<a class="card" href="#espece/'+s.taxon_id+'" data-espece="'+s.taxon_id+'">'+imgCard(s.photo,s.common)+'<div class="card-body"><h3>'+esc(s.common)+'</h3><div class="sci">'+esc(s.name)+'</div><div class="card-meta">'+s.count+' obs.</div></div></a>').join('');bind();};
   document.querySelectorAll('.tree-item,.chip').forEach(el=>el.addEventListener('click',()=>{cur=el.dataset.group;rend();}));bind();rend();
 }
+
+// Nombre d'espèces distinctes d'un groupe (d'après la liste des espèces, pas les totaux d'observations)
+function speciesInGroup(k){ return (DATA.species||[]).filter(function(s){return s.iconic===k;}).length; }
 
 function pageStats(){
   mount('stats');
@@ -71,6 +74,11 @@ function pageStats(){
     count:g.count||0,
     color:GROUP_COLORS[g.key||g.name]||'#94a3b8'
   })).filter(g=>g.count>0);
+
+  // Espèces par groupe (réel) : une espèce = une entrée de la liste, quel que soit son nombre d'observations
+  const iconicSp=Object.entries((DATA.species||[]).reduce((a,sp)=>{const k=sp.iconic||'Autre'; a[k]=(a[k]||0)+1; return a;},{}))
+    .map(([k,n])=>({key:k, label:GROUPES_FR[k]||k, count:n, color:GROUP_COLORS[k]||'#94a3b8'}))
+    .sort((a,b)=>b.count-a.count);
 
   // Statuts
   const stCount={indigene:0,introduite:0,envahissante:0,protegee:0,autre:0};
@@ -242,7 +250,7 @@ function pageStats(){
 
   document.getElementById('donut-row').innerHTML=
     donutSVG(quality, String(totalObs), 'OBSERVATIONS', 200)+
-    donutSVG(iconic.map(g=>({label:g.label,count:g.count,color:g.color})), String(totalSp), 'ESPÈCES', 200);
+    donutSVG(iconicSp.map(g=>({label:g.label,count:g.count,color:g.color})), String(totalSp), 'ESPÈCES', 200);
 
   // --- Sunburst (arcs by angle) ---
   function renderSunburst(tree){
@@ -291,7 +299,7 @@ function pageStats(){
       '<text x="'+cx+'" y="'+(cy+16)+'" text-anchor="middle" class="sb-center-sub">obs.</text></svg>';
     document.getElementById('sunburst').innerHTML=svg;
     // legend top groups
-    document.getElementById('sunburst-legend').innerHTML=iconic.map(g=>
+    document.getElementById('sunburst-legend').innerHTML='<div class="sb-leg-title">Observations</div>'+iconic.map(g=>
       '<div class="donut-leg"><span class="dot" style="background:'+g.color+'"></span>'+esc(g.label)+' <em>'+g.count+'</em></div>'
     ).join('');
     // click species arcs
