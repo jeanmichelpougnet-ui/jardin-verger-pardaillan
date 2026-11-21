@@ -743,7 +743,7 @@ function route(){
   if(hash.startsWith('espece/')){
     const key = decodeURIComponent(hash.slice(7));
     const f = (DATA.fiches||{})[key];
-    document.title = f ? ((f.nom_commun||f.nom||key)+' — Jardin-Verger de Pardaillan') : 'Jardin-Verger de Pardaillan';
+    document.title = f ? ((f.common||f.nom_commun||f.name||f.nom||key)+' — Jardin-Verger de Pardaillan') : 'Jardin-Verger de Pardaillan — Biodiversité au Touvet';
   } else if(hash.includes('parcourir')||hash.includes('explorer')){
     document.title = 'Parcourir — Jardin-Verger de Pardaillan';
   } else if(hash.includes('remarquable')){
@@ -753,7 +753,7 @@ function route(){
   } else if(hash.includes('jardin')){
     document.title = 'Le Jardin — Jardin-Verger de Pardaillan';
   } else {
-    document.title = 'Jardin-Verger de Pardaillan';
+    document.title = 'Jardin-Verger de Pardaillan — Biodiversité au Touvet';
   }
 
   const h=(location.hash||'#accueil').slice(1).split('/');
