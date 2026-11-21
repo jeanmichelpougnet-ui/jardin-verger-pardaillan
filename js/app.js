@@ -82,15 +82,8 @@ function pageStats(){
   // Qualité obs (donut 1)
   const quality=[
     {label:'Recherche', count:research, color:'#84cc16'},
-    {label:'Identification', count:needsId, color:'#fde047'},
-    {label:'Vérifiée', count:casual, color:'#94a3b8'}
-  ].filter(x=>x.count>0);
-
-  // Identifications proxy (donut 3) — répartition simple
-  const idParts=[
-    {label:'En tête / confirmées', count:research, color:'#84cc16'},
-    {label:'Soutien', count:Math.max(1, Math.round(research*0.15)), color:'#fde047'},
-    {label:'À améliorer', count:Math.max(0, totalSp-research+needsId), color:'#4d7c0f'}
+    {label:'Besoin d\'identification', count:needsId, color:'#fde047'},
+    {label:'Vérifiée', count:casual, color:'#22c55e'}
   ].filter(x=>x.count>0);
 
   // Mois d'observation (à partir des dates des fiches)
@@ -233,8 +226,7 @@ function pageStats(){
 
   document.getElementById('donut-row').innerHTML=
     donutSVG(quality, String(totalObs), 'OBSERVATIONS', 200)+
-    donutSVG(iconic.map(g=>({label:g.label,count:g.count,color:g.color})), String(totalSp), 'ESPÈCES', 200)+
-    donutSVG(idParts, String(research), 'NIV. RECHERCHE', 200);
+    donutSVG(iconic.map(g=>({label:g.label,count:g.count,color:g.color})), String(totalSp), 'ESPÈCES', 200);
 
   // --- Sunburst (arcs by angle) ---
   function renderSunburst(tree){
