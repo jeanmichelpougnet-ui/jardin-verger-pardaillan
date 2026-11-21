@@ -1055,3 +1055,36 @@ button, input, select { font: inherit; }
 .fiche-card p,.fiche-card li{font-size:.95rem;line-height:1.6}
 .taxo-row{font-size:.92rem;padding:.5rem 0}
 .taxo-val{font-size:.95rem}
+
+/* ===== Statistiques : courbe d'accumulation, complétude, rôles écologiques ===== */
+.accum-wrap{width:100%;max-width:900px;margin:0 auto}
+.accum-svg{display:block;width:100%;height:auto}
+.accum-svg text{fill:#94a3b8;font-size:11px;font-family:system-ui,sans-serif}
+.accum-svg .grid{stroke:#1e293b;stroke-width:1}
+.accum-svg .acc-area{fill:url(#accGrad)}
+.accum-svg .acc-line{fill:none;stroke:#a3e635;stroke-width:2.5;stroke-linejoin:round}
+.accum-svg .acc-end{fill:#a3e635}
+.accum-svg text.acc-total{fill:#f8fafc;font-weight:700;font-size:13px}
+.accum-sum{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem 1.75rem;margin-top:.9rem;font-size:.85rem;color:#cbd5e1;text-align:center}
+.accum-sum b{color:#f8fafc}
+.accum-sum .stats-note{flex-basis:100%;margin:.25rem 0 0}
+.stats-note{font-size:.76rem;line-height:1.5;color:#94a3b8;margin:.9rem 0 0;text-align:center}
+.stats-two>div{min-width:0}
+.cmp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+@media(max-width:480px){.cmp-grid{grid-template-columns:1fr}}
+.cmp-tile{background:#1e293b;border-radius:12px;padding:.8rem .5rem;text-align:center}
+.cmp-num{font-size:1.5rem;font-weight:800;color:#f8fafc;line-height:1.1}
+.cmp-lab{font-size:.72rem;color:#94a3b8;margin-top:.3rem;line-height:1.35}
+.cmp-bar{height:14px;background:#1e293b;border-radius:7px;overflow:hidden;margin:1.1rem 0 .5rem}
+.cmp-bar>i{display:block;height:100%;background:linear-gradient(90deg,#a3e635,#65a30d);border-radius:7px}
+.cmp-cap{font-size:.82rem;color:#cbd5e1;text-align:center;line-height:1.5}
+.cmp-cap b{color:#f8fafc}
+.role-row{display:grid;grid-template-columns:150px 1fr 64px;gap:.6rem;align-items:center;margin-bottom:.65rem}
+@media(max-width:600px){.role-row{grid-template-columns:1fr 64px}.role-row .role-lab{grid-column:1/-1}}
+.role-lab{font-size:.82rem;color:#e2e8f0}
+.role-lab small{display:block;font-size:.68rem;color:#94a3b8}
+.role-track{height:20px;background:#1e293b;border-radius:5px;overflow:hidden}
+.role-fill{height:100%;border-radius:5px}
+.role-val{font-size:.85rem;font-weight:700;color:#f8fafc;text-align:right;line-height:1.1}
+.role-val small{display:block;font-size:.66rem;font-weight:400;color:#94a3b8}
+
